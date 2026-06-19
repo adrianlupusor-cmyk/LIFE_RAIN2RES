@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAIN2RES — Instrument APL: Studiu de fezabilitate, soluție tehnică și buget</title>
+<style>
+  :root{
+    --blue:#0b5394; --blue2:#1c73c4; --teal:#0e7c7b; --green:#2e7d32;
+    --ink:#1a2330; --muted:#5b6878; --line:#d8e0ea; --bg:#f4f7fb; --card:#ffffff;
+    --warn:#b45309; --soft:#eef4fb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5;font-size:15px}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 18px 80px}
+  header.app{background:linear-gradient(120deg,#0b5394,#0e7c7b);color:#fff;padding:26px 0 22px}
+  header.app .wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .logo{font-weight:800;font-size:26px;letter-spacing:.5px;background:rgba(255,255,255,.14);padding:8px 14px;border-radius:10px}
+  header.app h1{font-size:18px;margin:0;font-weight:600}
+  header.app p{margin:4px 0 0;font-size:13px;opacity:.9}
+  .intro{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--blue2);border-radius:10px;padding:16px 18px;margin:18px 0}
+  .intro h2{margin:0 0 6px;font-size:16px;color:var(--blue)}
+  .intro ol{margin:8px 0 0;padding-left:20px}
+  .intro li{margin:3px 0}
+  .toolbar{position:sticky;top:0;z-index:20;background:rgba(244,247,251,.95);backdrop-filter:blur(4px);padding:10px 0;border-bottom:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  button{font-family:inherit;font-size:14px;border:0;border-radius:8px;padding:9px 14px;cursor:pointer;font-weight:600}
+  .btn-primary{background:var(--blue);color:#fff}
+  .btn-primary:hover{background:#0a4680}
+  .btn-2{background:var(--teal);color:#fff}
+  .btn-2:hover{background:#0a605f}
+  .btn-ghost{background:#e7eef7;color:var(--blue)}
+  .btn-ghost:hover{background:#d6e3f2}
+  .btn-amber{background:#f3e4cc;color:var(--warn)}
+  section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:16px 0;box-shadow:0 1px 3px rgba(20,40,70,.04)}
+  section.card>h2{margin:0 0 4px;font-size:17px;color:var(--blue);display:flex;align-items:center;gap:8px}
+  .num{display:inline-flex;width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;font-size:13px;align-items:center;justify-content:center;font-weight:700}
+  .hint{color:var(--muted);font-size:12.5px;margin:0 0 14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px 16px}
+  .fld{display:flex;flex-direction:column;gap:4px}
+  .fld label{font-size:12.5px;font-weight:600;color:#33415a}
+  .fld .u{font-weight:400;color:var(--muted)}
+  .fld input,.fld select,.fld textarea{padding:8px 10px;border:1px solid var(--line);border-radius:7px;font-size:14px;font-family:inherit;background:#fff}
+  .fld input:focus,.fld select:focus,.fld textarea:focus{outline:2px solid #bcd6f3;border-color:var(--blue2)}
+  .fld small{color:var(--muted);font-size:11.5px}
+  table.comp{width:100%;border-collapse:collapse;font-size:13.5px}
+  table.comp th,table.comp td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+  table.comp th{background:var(--soft);color:#33415a;font-size:12px;text-transform:uppercase;letter-spacing:.3px}
+  table.comp td input[type=number]{width:92px;padding:6px 7px;border:1px solid var(--line);border-radius:6px;font-size:13px}
+  table.comp td.cat{font-weight:600;color:var(--teal);font-size:11px;text-transform:uppercase}
+  .grp-head td{background:#eaf1f9;font-weight:700;color:var(--blue);font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+  .chk{width:18px;height:18px;accent-color:var(--blue)}
+  details.assump{margin-top:8px}
+  details.assump summary{cursor:pointer;font-weight:600;color:var(--blue);font-size:14px;padding:6px 0}
+  /* results */
+  #results{display:none}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:6px 0 16px}
+  .kpi{background:linear-gradient(135deg,#f0f6ff,#eafaf6);border:1px solid #d6e6f3;border-radius:10px;padding:12px 14px}
+  .kpi .v{font-size:21px;font-weight:800;color:var(--blue)}
+  .kpi .l{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .kpi .s{font-size:11px;color:var(--teal);margin-top:3px}
+  table.bud{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
+  table.bud th,table.bud td{padding:7px 9px;border-bottom:1px solid var(--line)}
+  table.bud th{background:var(--soft);text-align:left;font-size:12px}
+  table.bud td.r,table.bud th.r{text-align:right;font-variant-numeric:tabular-nums}
+  table.bud tr.tot td{font-weight:800;background:#eef4fb;border-top:2px solid var(--blue)}
+  table.bud tr.sub td{font-weight:700;background:#f7fafd}
+  .pill{display:inline-block;background:#eafaf6;color:var(--teal);border:1px solid #bfe8e2;border-radius:20px;padding:2px 10px;font-size:11.5px;font-weight:600;margin:2px 4px 2px 0}
+  /* dossier */
+  #dossier{background:#fff;border:1px solid var(--line);border-radius:12px;padding:30px 38px;margin-top:18px;font-size:14px;color:#13202f}
+  #dossier h1{font-size:21px;color:var(--blue);border-bottom:2px solid var(--blue);padding-bottom:6px;margin:0 0 4px}
+  #dossier h2{font-size:17px;color:var(--blue);margin:26px 0 6px;border-bottom:1px solid var(--line);padding-bottom:4px}
+  #dossier h3{font-size:14.5px;color:var(--teal);margin:16px 0 4px}
+  #dossier table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0}
+  #dossier th,#dossier td{border:1px solid #c9d4e0;padding:5px 7px;text-align:left}
+  #dossier th{background:#eef4fb}
+  #dossier td.r{text-align:right;font-variant-numeric:tabular-nums}
+  #dossier .meta{font-size:12px;color:var(--muted)}
+  #dossier .note{font-size:11.5px;color:var(--muted);font-style:italic}
+  .flag{background:#fff7ed;border:1px solid #fcd9a8;color:#92400e;border-radius:8px;padding:8px 12px;font-size:12.5px;margin:8px 0}
+  .footer{color:var(--muted);font-size:12px;margin-top:24px;text-align:center}
+  @media print{
+    body{background:#fff}
+    header.app,.intro,.toolbar,form,#results .editnote,.footer,.noprint{display:none !important}
+    #dossier{border:0;padding:0;margin:0}
+    .wrap{max-width:none;padding:0}
+  }
+</style>
+</head>
+<body>
+<header class="app">
+  <div class="wrap">
+    <div class="logo">RAIN2RES</div>
+    <div>
+      <h1>Instrument pentru APL — Studiu de fezabilitate, soluție tehnică și estimare de buget</h1>
+      <p>LIFE-2026-SAP-ENV · Managementul integrat al apei pluviale · De la riscul de inundații la resursă pentru irigare</p>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="intro">
+    <h2>Cum funcționează (instrucțiuni pentru APL)</h2>
+    <ol>
+      <li>Completați datele despre localitate, hidrologie, contextul inundații/secetă și cererea de apă pentru irigare. Câmpurile au valori implicite pentru Republica Moldova — ajustați-le la situația dvs.</li>
+      <li>Bifați componentele soluției pe care intenționați să le implementați și ajustați cantitățile (butonul „Sugerează cantități" le pre-completează pe baza bazinului dvs.).</li>
+      <li>Apăsați <b>„Generează dosarul"</b>. Instrumentul calculează volumele de apă, dimensionarea și bugetul, apoi produce documentul în <b>limba engleză</b> (studiu de fezabilitate + soluție tehnică + buget), pregătit ca anexă la aplicația LIFE.</li>
+      <li>Exportați în <b>Word</b> sau <b>PDF</b>, și salvați datele introduse (<b>JSON</b>) pentru a le returna coordonatorului proiectului.</li>
+    </ol>
+  </div>
+
+  <div class="toolbar noprint">
+    <button class="btn-primary" onclick="generate()">⚙️ Generează dosarul</button>
+    <button class="btn-2" onclick="downloadWord()">⬇️ Descarcă Word (.doc)</button>
+    <button class="btn-ghost" onclick="window.print()">🖨️ Printează / PDF</button>
+    <button class="btn-ghost" onclick="saveJSON()">💾 Salvează date (JSON)</button>
+    <button class="btn-ghost" onclick="document.getElementById('imp').click()">📂 Încarcă date (JSON)</button>
+    <input id="imp" type="file" accept="application/json,.json" style="display:none" onchange="loadJSON(event)">
+    <button class="btn-amber" onclick="suggestQty()">✨ Sugerează cantități</button>
+    <button class="btn-ghost" onclick="loadExample()">📄 Exemplu completat</button>
+  </div>
+
+  <form id="form" oninput="liveCalc()">
+
+  <!-- 1. LOCALITATE -->
+  <section class="card">
+    <h2><span class="num">1</span> Date despre localitate</h2>
+    <p class="hint">Identificarea APL și expunerea populației. Folosite în studiul de fezabilitate și în indicatorii de impact.</p>
+    <div class="grid">
+      <div class="fld"><label>Denumirea APL / localității</label><input id="lpaName" placeholder="ex. Orașul Ungheni"></div>
+      <div class="fld"><label>Raionul</label><input id="raion" placeholder="ex. Ungheni"></div>
+      <div class="fld"><label>Districtul bazinal hidrografic</label>
+        <select id="basin"><option value="Danube–Prut–Black Sea">Dunăre–Prut–Marea Neagră</option><option value="Dniester (Nistru)">Nistru</option></select></div>
+      <div class="fld"><label>Tipul localității</label>
+        <select id="settlementType"><option value="urban">Urban</option><option value="peri-urban">Periurban</option><option value="rural">Rural</option></select></div>
+      <div class="fld"><label>Populația totală <span class="u">(locuitori)</span></label><input id="population" type="number" min="0" placeholder="ex. 30000"></div>
+      <div class="fld"><label>Populația expusă inundațiilor <span class="u">(locuitori)</span></label><input id="popExposed" type="number" min="0" placeholder="ex. 6500"></div>
+      <div class="fld"><label>Persoana de contact</label><input id="contact" placeholder="Nume, funcție"></div>
+      <div class="fld"><label>Email / telefon contact</label><input id="contactInfo" placeholder=""></div>
+    </div>
+  </section>
+
+  <!-- 2. HIDROLOGIE -->
+  <section class="card">
+    <h2><span class="num">2</span> Date hidrologice și de teren</h2>
+    <p class="hint">Baza de calcul pentru volumele de scurgere, retenție și dimensionarea infrastructurii.</p>
+    <div class="grid">
+      <div class="fld"><label>Suprafața bazinului de captare vizat <span class="u">(ha)</span></label><input id="catchmentArea" type="number" min="0" step="0.1" value="15"><small>Sub-bazinul demonstrativ care va fi amenajat în proiect (nu întreg orașul).</small></div>
+      <div class="fld"><label>Ponderea suprafețelor impermeabile <span class="u">(%)</span></label><input id="impervious" type="number" min="0" max="100" value="50"><small>Acoperișuri, drumuri, pavaje. Urban ~45–70%, rural ~10–25%.</small></div>
+      <div class="fld"><label>Precipitații medii anuale <span class="u">(mm/an)</span></label><input id="rainfall" type="number" min="0" value="540"><small>Moldova ~450–620 mm/an.</small></div>
+      <div class="fld"><label>Ploaia de calcul, 1-din-10 ani <span class="u">(mm/eveniment)</span></label><input id="designStorm" type="number" min="0" value="65"><small>Pentru dimensionarea bazinelor de detenție.</small></div>
+      <div class="fld"><label>Tipul de sol / capacitate de infiltrare</label>
+        <select id="soilType"><option value="sandy">Nisipos — infiltrare bună</option><option value="loam" selected>Lutos — infiltrare medie</option><option value="clay">Argilos — infiltrare slabă</option></select></div>
+      <div class="fld"><label>Starea rețelei de canalizare pluvială</label>
+        <select id="drainageState"><option value="none">Inexistentă</option><option value="undersized" selected>Subdimensionată / veche</option><option value="partial">Parțial funcțională</option><option value="good">Bună</option></select></div>
+      <div class="fld"><label>Hotspoturi / frecvența inundațiilor</label><input id="floodFreq" placeholder="ex. inundații pluviale 1–2 ori/an în centru"></div>
+      <div class="fld"><label>Probleme de secetă / deficit de apă</label><input id="droughtNote" placeholder="ex. secetă severă 2024; agricultură pluvială"></div>
+    </div>
+  </section>
+
+  <!-- 3. CERERE -->
+  <section class="card">
+    <h2><span class="num">3</span> Cererea de apă pentru reutilizare și irigare</h2>
+    <p class="hint">Determină volumul recoltat reutilizat (KPI-4) și suprafața irigată (KPI-5).</p>
+    <div class="grid">
+      <div class="fld"><label>Suprafața vizată pentru irigare din apă pluvială <span class="u">(ha)</span></label><input id="irrigArea" type="number" min="0" step="0.1" value="18"></div>
+      <div class="fld"><label>Necesar suplimentar de irigare <span class="u">(m³/ha/sezon)</span></label><input id="irrigDemand" type="number" min="0" value="500"><small>Irigare suplimentară tipică la stadii critice.</small></div>
+      <div class="fld"><label>Beneficiari ai reutilizării</label>
+        <select id="reuseTarget"><option value="peri-urban farm plots and market gardens">Loturi agricole periurbane / grădini de piață</option><option value="public green space, parks and sports grounds">Spații verzi publice, parcuri, terenuri sportive</option><option value="household kitchen gardens and school gardens">Grădini casnice și școlare</option><option value="a mix of agricultural plots, public green space and household gardens">Mix (agricol + spații verzi + grădini)</option></select></div>
+      <div class="fld"><label>Teren disponibil pentru stocare (iazuri/rezervoare)</label>
+        <select id="landAvail"><option value="municipal land available">Teren municipal disponibil</option><option value="limited, to be negotiated">Limitat — de negociat</option><option value="ample peri-urban land">Amplu, periurban</option></select></div>
+    </div>
+  </section>
+
+  <!-- 4. COMPONENTE -->
+  <section class="card">
+    <h2><span class="num">4</span> Componentele soluției „retain–store–reuse"</h2>
+    <p class="hint">Bifați măsurile pe care le veți implementa și ajustați cantitatea și costul unitar. Costurile unitare sunt orientative (referințe de bună practică UE/regională) — ajustați-le la ofertele locale. Apăsați „✨ Sugerează cantități" pentru pre-completare pe baza bazinului dvs.</p>
+    <table class="comp">
+      <thead><tr><th style="width:34px"></th><th>Componentă</th><th>Categorie LIFE</th><th>Cantitate</th><th>Unitate</th><th>Cost unitar (EUR)</th></tr></thead>
+      <tbody id="compBody"></tbody>
+    </table>
+
+    <details class="assump">
+      <summary>⚙️ Ipoteze de calcul avansate (cote hidrologice și de buget)</summary>
+      <div class="grid" style="margin-top:10px">
+        <div class="fld"><label>Eficiența de captare a scurgerii <span class="u">(%)</span></label><input id="captureEff" type="number" min="0" max="100" value="70"><small>Cota din scurgerea anuală interceptată de sistem.</small></div>
+        <div class="fld"><label>Cota apei captate dirijată spre reutilizare <span class="u">(%)</span></label><input id="fReuse" type="number" min="0" max="100" value="55"><small>Restul este infiltrat/reținut (control inundații).</small></div>
+        <div class="fld"><label>Cheltuieli de personal <span class="u">(% din lucrări+echipamente)</span></label><input id="personnelRate" type="number" min="0" value="18"><small>Proiectare, supervizare, monitorizare, management.</small></div>
+        <div class="fld"><label>Deplasări și diurnă <span class="u">(%)</span></label><input id="travelRate" type="number" min="0" value="3"></div>
+        <div class="fld"><label>Organizare de șantier / cheltuieli neprevăzute <span class="u">(% din lucrări)</span></label><input id="prelimRate" type="number" min="0" value="8"></div>
+        <div class="fld"><label>Subcontractare fixă — audit/studii <span class="u">(EUR)</span></label><input id="auditFixed" type="number" min="0" value="10000"></div>
+        <div class="fld"><label>Costuri indirecte LIFE <span class="u">(% fix)</span></label><input id="indirectRate" type="number" value="7" readonly style="background:#eef"><small>Rată forfetară LIFE — 7%.</small></div>
+        <div class="fld"><label>Rata de cofinanțare LIFE <span class="u">(% contribuție UE)</span></label><input id="euRate" type="number" value="60" readonly style="background:#eef"><small>SAP — 60% UE / 40% cofinanțare.</small></div>
+      </div>
+    </details>
+  </section>
+
+  </form>
+
+  <!-- RESULTS -->
+  <div id="results">
+    <section class="card">
+      <h2>📊 Rezultate cheie (previzualizare)</h2>
+      <p class="hint editnote">Document generat mai jos în limba engleză. Modificați orice câmp de mai sus și apăsați din nou „Generează dosarul".</p>
+      <div class="kpis" id="kpiCards"></div>
+      <div id="budgetPreview"></div>
+    </section>
+    <div id="dossier"></div>
+  </div>
+
+  <p class="footer">RAIN2RES · Instrument de fezabilitate pentru APL · Estimări orientative pentru etapa de aplicare LIFE; a se rafina prin proiectare tehnică detaliată și oferte locale.</p>
+</div>
+
+<script>
+/* ============================ CONFIG ============================ */
+// Component library. group: 'c'=construction (Other goods/works/services), 'e'=equipment (depreciation)
+const COMPONENTS = [
+  {g:'c', id:'permPave',   ro:'Pavaje permeabile',                      unit:'m²',  qty:800,  cost:75},
+  {g:'c', id:'rainGarden', ro:'Grădini de ploaie / bioretenție',       unit:'m²',  qty:500,  cost:90},
+  {g:'c', id:'greenRoof',  ro:'Acoperișuri verzi (extensive)',         unit:'m²',  qty:0,    cost:100},
+  {g:'c', id:'bioswale',   ro:'Canale vegetate (bioswale)',            unit:'m',   qty:400,  cost:90},
+  {g:'c', id:'filterStrip',ro:'Fâșii filtrante',                       unit:'m²',  qty:600,  cost:20},
+  {g:'c', id:'detention',  ro:'Bazine de detenție / retenție',         unit:'m³',  qty:1500, cost:25},
+  {g:'c', id:'infilTrench',ro:'Tranșee de infiltrare',                 unit:'m',   qty:150,  cost:110},
+  {g:'c', id:'wetland',    ro:'Zone umede construite',                 unit:'m²',  qty:800,  cost:50},
+  {g:'c', id:'floodplain', ro:'Renaturarea luncii inundabile',         unit:'ha',  qty:0,    cost:25000},
+  {g:'c', id:'storagePond',ro:'Iaz de stocare impermeabilizat',        unit:'m³',  qty:1500, cost:35},
+  {g:'c', id:'storageTank',ro:'Rezervoare modulare',                   unit:'m³',  qty:0,    cost:250},
+  {g:'c', id:'firstFlush', ro:'Sisteme first-flush / pre-tratare',     unit:'buc', qty:2,    cost:15000},
+  {g:'c', id:'dripIrrig',  ro:'Rețea de irigare prin picurare',        unit:'ha',  qty:15,   cost:3500},
+  {g:'c', id:'sprinkler',  ro:'Aspersoare de joasă presiune',          unit:'ha',  qty:0,    cost:2500},
+  {g:'e', id:'solarPump',  ro:'Pompare solară (PV)',                   unit:'kW',  qty:12,   cost:1800},
+  {g:'e', id:'iotSensor',  ro:'Senzori IoT / telemetrie',              unit:'buc', qty:5,    cost:1500},
+  {g:'e', id:'soilMoist',  ro:'Stații de umiditate a solului',         unit:'buc', qty:3,    cost:800},
+  {g:'e', id:'dashboard',  ro:'Tablou de bord / integrare date',       unit:'buc', qty:1,    cost:10000},
+];
+// English labels for the dossier
+const EN_LABEL = {
+  permPave:'Permeable pavements', rainGarden:'Rain gardens / bioretention', greenRoof:'Green roofs (extensive)',
+  bioswale:'Vegetated bioswales', filterStrip:'Filter strips', detention:'Detention / retention basins',
+  infilTrench:'Infiltration trenches', wetland:'Constructed wetlands', floodplain:'Floodplain re-naturalisation',
+  storagePond:'Lined storage pond', storageTank:'Modular storage tanks', firstFlush:'First-flush / pre-treatment systems',
+  dripIrrig:'Drip irrigation network', sprinkler:'Low-pressure sprinklers', solarPump:'Solar pumping (PV)',
+  iotSensor:'IoT sensors / telemetry', soilMoist:'Soil-moisture stations', dashboard:'Dashboard / data integration'
+};
+const EN_UNIT = {'m²':'m²','m':'m','m³':'m³','ha':'ha','buc':'units','kW':'kW'};
+
+/* ============================ BUILD FORM ============================ */
+function buildComponents(){
+  const tb=document.getElementById('compBody'); let html='';
+  let lastG='';
+  COMPONENTS.forEach(c=>{
+    if(c.g!==lastG){ html+=`<tr class="grp-head"><td colspan="6">${c.g==='c'?'A. Lucrări construcții verzi-gri (Other goods, works & services)':'B. Echipamente — monitorizare & energie (Equipment)'}</td></tr>`; lastG=c.g;}
+    const checked = c.qty>0 ? 'checked':'';
+    html+=`<tr>
+      <td><input type="checkbox" class="chk" id="on_${c.id}" ${checked}></td>
+      <td>${c.ro}</td>
+      <td class="cat">${c.g==='c'?'C.3 Lucrări':'C.2 Echip.'}</td>
+      <td><input type="number" min="0" step="any" id="qty_${c.id}" value="${c.qty}"></td>
+      <td>${c.unit}</td>
+      <td><input type="number" min="0" step="any" id="cost_${c.id}" value="${c.cost}"></td>
+    </tr>`;
+  });
+  tb.innerHTML=html;
+}
+buildComponents();
+
+/* ============================ HELPERS ============================ */
+const $=id=>document.getElementById(id);
+const num=id=>{const v=parseFloat(($(id)||{}).value); return isNaN(v)?0:v;};
+const txt=id=>(($(id)||{}).value||'').trim();
+const fmt=n=>Math.round(n).toLocaleString('en-US');
+const fmt1=n=>(Math.round(n*10)/10).toLocaleString('en-US');
+const eur=n=>'€'+Math.round(n).toLocaleString('en-US');
+
+/* ============================ ENGINE ============================ */
+function computeAll(){
+  const A_ha=num('catchmentArea'), I=num('impervious'), P=num('rainfall'), D=num('designStorm');
+  const A_m2=A_ha*10000, A_imp=A_m2*(I/100);
+  const Rv=Math.max(0.05, Math.min(0.95, 0.05+0.009*I));              // volumetric runoff coefficient (Schueler)
+  const captureEff=num('captureEff')/100, fReuse=num('fReuse')/100;
+  const V_runoff=A_m2*(P/1000)*Rv;                                     // annual runoff generated (m³/yr)
+  const V_managed=V_runoff*captureEff;                                 // managed by interventions
+  const V_harvest=V_managed*fReuse;                                    // directed to harvesting/storage
+  const irrigArea=num('irrigArea'), irrigDemand=num('irrigDemand');
+  const demand=irrigArea*irrigDemand;
+  const KPI4=Math.min(V_harvest, demand);                             // reuse delivered (m³/yr)
+  const KPI5=irrigDemand>0?Math.min(irrigArea, KPI4/irrigDemand):0;   // ha effectively irrigated
+  const KPI1=V_managed;                                                // retained/detained/infiltrated/captured
+  const overflow=Math.max(0, V_harvest-demand);
+  const V_event=A_m2*(D/1000)*Rv;                                      // design-storm runoff (m³)
+  const V_det=V_event*0.55;                                            // detention vol for >=40% peak cut
+  const storageReuse=KPI4/4;                                           // seasonal storage (≈4 turnovers)
+  // budget
+  let works=0, equip=0; const lines=[];
+  COMPONENTS.forEach(c=>{
+    const on=$('on_'+c.id).checked; const q=num('qty_'+c.id); const u=num('cost_'+c.id);
+    const amt=on?q*u:0;
+    if(on && q>0){ lines.push({id:c.id, g:c.g, q, u, amt, unit:c.unit}); }
+    if(on){ if(c.g==='c') works+=amt; else equip+=amt; }
+  });
+  const prelim=works*(num('prelimRate')/100);
+  const otherWorks=works+prelim;
+  const personnel=(otherWorks+equip)*(num('personnelRate')/100);
+  const travel=(otherWorks+equip)*(num('travelRate')/100);
+  const subcontract=num('auditFixed');
+  const indirectBase=personnel+equip+travel+otherWorks;               // excl. subcontracting (LIFE 7% rule)
+  const indirect=indirectBase*(num('indirectRate')/100);
+  const total=otherWorks+equip+personnel+travel+subcontract+indirect;
+  const euRate=num('euRate')/100;
+  const eu=total*euRate, cofin=total*(1-euRate);
+  // peak attenuation estimate
+  const detVol = ($('on_detention').checked?num('qty_detention'):0) + ($('on_storagePond').checked?num('qty_storagePond')*0.3:0);
+  const peakRed = V_event>0 ? Math.max(0, Math.min(60, Math.round(40*detVol/(V_det||1)))) : 0;
+  // cost-effectiveness
+  const popExp=num('popExposed');
+  const ce_retain=KPI1>0?total/KPI1:0, ce_reuse=KPI4>0?total/KPI4:0, ce_ha=KPI5>0?total/KPI5:0, ce_cap=popExp>0?total/popExp:0;
+  return {A_ha,I,P,D,A_m2,A_imp,Rv,V_runoff,V_managed,V_harvest,demand,KPI1,KPI4,KPI5,overflow,V_event,V_det,storageReuse,
+          works,prelim,otherWorks,equip,personnel,travel,subcontract,indirect,total,eu,cofin,euRate,lines,peakRed,
+          ce_retain,ce_reuse,ce_ha,ce_cap,popExp,irrigArea,irrigDemand};
+}
+
+/* ============================ LIVE PREVIEW ============================ */
+function liveCalc(){ if(document.getElementById('results').style.display==='block') generate(); }
+
+function kpiCards(r){
+  const c=[
+    ['Stormwater managed','KPI-1 retained/infiltrated',fmt(r.KPI1)+' m³/yr'],
+    ['Rainwater reused','KPI-4 harvested for irrigation',fmt(r.KPI4)+' m³/yr'],
+    ['Land irrigated','KPI-5',fmt1(r.KPI5)+' ha'],
+    ['Peak runoff cut','KPI-2 (1-in-10-yr storm)','≈ '+r.peakRed+'%'],
+    ['Total eligible cost','feasibility-grade',eur(r.total)],
+    ['EU contribution','at '+Math.round(r.euRate*100)+'%',eur(r.eu)],
+  ];
+  return c.map(x=>`<div class="kpi"><div class="v">${x[2]}</div><div class="l">${x[0]}</div><div class="s">${x[1]}</div></div>`).join('');
+}
+
+/* ============================ DOSSIER (ENGLISH) ============================ */
+function budgetTable(r){
+  const row=(c,a,n)=>`<tr><td>${c}</td><td class="r">${eur(a)}</td><td class="r">${(a/r.total*100).toFixed(1)}%</td><td>${n||''}</td></tr>`;
+  return `<table>
+    <tr><th>Cost category (LIFE)</th><th class="r">Amount (EUR)</th><th class="r">% total</th><th>Notes</th></tr>
+    ${row('A. Personnel costs', r.personnel, 'Design, supervision, monitoring, coordination')}
+    ${row('B. Subcontracting', r.subcontract, 'Financial audit / specialised studies & labs')}
+    ${row('C.1 Travel & subsistence', r.travel, 'Coordination & supervision')}
+    ${row('C.2 Equipment (depreciation)', r.equip, 'Sensors/telemetry, solar pumps, dashboard')}
+    ${row('C.3 Other goods, works & services', r.otherWorks, 'Green-grey demonstration works incl. site prep/preliminaries')}
+    ${row('Indirect costs (7% flat rate)', r.indirect, 'On direct costs excl. subcontracting')}
+    <tr class="tot"><td>TOTAL ELIGIBLE COST</td><td class="r">${eur(r.total)}</td><td class="r">100%</td><td></td></tr>
+    <tr class="sub"><td>EU contribution (${Math.round(r.euRate*100)}%)</td><td class="r">${eur(r.eu)}</td><td class="r">${Math.round(r.euRate*100)}%</td><td>LIFE SAP grant</td></tr>
+    <tr class="sub"><td>Co-financing (${100-Math.round(r.euRate*100)}%)</td><td class="r">${eur(r.cofin)}</td><td class="r">${100-Math.round(r.euRate*100)}%</td><td>LPA budget / national contribution</td></tr>
+  </table>`;
+}
+function itemTable(r){
+  if(!r.lines.length) return '<p class="note">No components selected.</p>';
+  let rows=r.lines.map(l=>`<tr><td>${EN_LABEL[l.id]}</td><td class="r">${fmt1(l.q)}</td><td>${EN_UNIT[l.unit]}</td><td class="r">${eur(l.u)}</td><td class="r">${eur(l.amt)}</td></tr>`).join('');
+  return `<table><tr><th>Measure</th><th class="r">Quantity</th><th>Unit</th><th class="r">Unit cost</th><th class="r">Cost (EUR)</th></tr>${rows}
+    <tr><td colspan="4"><b>Construction works subtotal</b></td><td class="r"><b>${eur(r.works)}</b></td></tr>
+    <tr><td colspan="4">Site preparation, preliminaries & design contingency</td><td class="r">${eur(r.prelim)}</td></tr>
+    <tr><td colspan="4"><b>Equipment subtotal</b></td><td class="r"><b>${eur(r.equip)}</b></td></tr></table>`;
+}
+
+function buildDossier(r){
+  const name=txt('lpaName')||'[LPA name]';
+  const basin=txt('basin'); const stype=txt('settlementType');
+  const raion=txt('raion'); const pop=num('population'); const popExp=r.popExp;
+  const soil={sandy:'sandy soils with good infiltration',loam:'loamy soils with moderate infiltration',clay:'clay soils with low infiltration'}[txt('soilType')];
+  const drain={none:'no engineered storm drainage',undersized:'an undersized and ageing storm-drainage network',partial:'a partially functional storm-drainage network',good:'a generally adequate storm-drainage network'}[txt('drainageState')];
+  const reuse=txt('reuseTarget'); const land=txt('landAvail');
+  const flood=txt('floodFreq')||'recurrent pluvial flooding during high-intensity storms';
+  const drought=txt('droughtNote')||'recurrent summer water scarcity affecting agriculture and green space';
+  const date=new Date().toLocaleDateString('en-GB',{year:'numeric',month:'long',day:'numeric'});
+  const enType={urban:'urban',['peri-urban']:'peri-urban',rural:'rural'}[stype]||stype;
+  const artA=s=>('aeiou'.includes((s||'x')[0].toLowerCase())?'an':'a');
+  const andJoin=a=>!a.length?'':a.length===1?a[0]:a.slice(0,-1).join(', ')+' and '+a[a.length-1];
+
+  const measuresList=andJoin(r.lines.filter(l=>l.g==='c').map(l=>EN_LABEL[l.id].toLowerCase()))||'site-appropriate green-grey measures';
+  const srcSel=r.lines.filter(l=>['permPave','rainGarden','greenRoof','filterStrip'].includes(l.id)).map(l=>EN_LABEL[l.id].toLowerCase());
+  const srcText=srcSel.length?andJoin(srcSel):'source-control measures';
+  const conveyText=r.lines.some(l=>l.id==='bioswale')?'vegetated bioswales providing slow conveyance and pre-treatment (sedimentation, biofiltration) in place of fast pipe flow':'vegetated conveyance providing pre-treatment in place of fast pipe flow';
+  const equipList=r.lines.filter(l=>l.g==='e').map(l=>EN_LABEL[l.id].toLowerCase()).join(', ')||'monitoring equipment';
+
+  let html=`
+  <h1>RAIN2RES — Local Feasibility Study, Technical Solution & Budget</h1>
+  <p class="meta"><b>Local Public Authority:</b> ${name}${raion?` (${raion} district)`:''} &nbsp;·&nbsp; <b>River basin district:</b> ${basin} &nbsp;·&nbsp; <b>Settlement type:</b> ${enType}<br>
+  <b>Project:</b> RAIN2RES — Integrated Rainwater Management (LIFE-2026-SAP-ENV) &nbsp;·&nbsp; <b>Prepared:</b> ${date}${txt('contact')?` &nbsp;·&nbsp; <b>Contact:</b> ${txt('contact')}`:''}</p>
+  <p class="note">This per-LPA annex is generated from locality data using a shared parametric methodology, ensuring comparable feasibility studies, technical solutions and budgets across all consortium LPAs. Figures are feasibility-grade and to be refined through detailed engineering design and local tender prices.</p>
+
+  <h2>PART 1 — Feasibility Study</h2>
+
+  <h3>1.1 Background and local rationale</h3>
+  <p>${name} is ${artA(enType)} ${enType} locality in the ${basin} river basin district of the Republic of Moldova${pop?`, with a total population of about ${fmt(pop)} inhabitants`:''}. Like much of the country, it is caught between the twin water extremes the RAIN2RES project addresses: intensifying pluvial/fluvial flooding on the one hand, and recurrent drought and water scarcity on the other. Locally, the authority reports ${flood}, while on the demand side it faces ${drought}. The settlement is currently served by ${drain}, and rainwater is managed as a hazard to be drained away rather than retained as a resource. Approximately ${fmt(popExp)} inhabitants are exposed to recurrent flooding.</p>
+
+  <h3>1.2 Site and catchment characterisation</h3>
+  <p>The targeted intervention catchment covers <b>${fmt1(r.A_ha)} ha</b>, of which an estimated <b>${r.I}%</b> is impervious (roofs, roads and paved surfaces). Mean annual precipitation is <b>${fmt(r.P)} mm</b>, falling on ${soil}. Using a volumetric runoff coefficient of <b>${r.Rv.toFixed(2)}</b> (derived from the impervious fraction), the catchment generates an estimated <b>${fmt(r.V_runoff)} m³/yr</b> of stormwater runoff. A design storm of <b>${r.D} mm</b> (1-in-10-year return period) produces a peak event runoff of about <b>${fmt(r.V_event)} m³</b>, which the current network cannot safely convey — the hydraulic basis for the flood problem.</p>
+
+  <h3>1.3 Water-balance and demand analysis</h3>
+  <p>With a capture efficiency of ${num('captureEff')}%, the proposed system would manage about <b>${fmt(r.V_managed)} m³/yr</b> of runoff. Directing ${num('fReuse')}% of this to harvesting and storage yields <b>${fmt(r.V_harvest)} m³/yr</b> of potentially reusable rainwater. Local irrigation demand — <b>${fmt1(r.irrigArea)} ha</b> at <b>${fmt(r.irrigDemand)} m³/ha/season</b> of supplementary irrigation — amounts to <b>${fmt(r.demand)} m³/yr</b>. The system can therefore deliver <b>${fmt(r.KPI4)} m³/yr</b> of harvested rainwater for reuse, effectively irrigating <b>${fmt1(r.KPI5)} ha</b>${r.overflow>0?`, with a surplus of ${fmt(r.overflow)} m³/yr available for additional uses or infiltration`:''}. Reuse beneficiaries: ${reuse}. ${land.charAt(0).toUpperCase()+land.slice(1)} for storage siting.</p>
+
+  <h3>1.4 Options appraisal and technical feasibility</h3>
+  <p>A site-specific combination of the RAIN2RES "retain–store–reuse" train is technically feasible at ${name}. The selected measures — ${measuresList} — are mature, low-regret technologies with demonstrated performance in comparable European programmes (e.g. Augustenborg/Malmö, Copenhagen Cloudburst Plan, Singapore ABC Waters, China Sponge City). They require no exotic inputs, can be procured and built by regional contractors, and are dimensioned to the local catchment. Reused water is treated to the quality class required by EU Water Reuse Regulation (EU) 2020/741 for each end-use. The solution is therefore assessed as technically feasible, environmentally beneficial and economically justified at feasibility-study level.</p>
+
+  <h3>1.5 Expected benefits and contribution to project KPIs</h3>
+  <table>
+    <tr><th>Indicator</th><th class="r">Local contribution</th></tr>
+    <tr><td>KPI-1 — Stormwater retained / detained / infiltrated</td><td class="r">${fmt(r.KPI1)} m³/yr</td></tr>
+    <tr><td>KPI-2 — Peak runoff reduction (design storm)</td><td class="r">≈ ${r.peakRed}%</td></tr>
+    <tr><td>KPI-4 — Rainwater harvested & reused</td><td class="r">${fmt(r.KPI4)} m³/yr</td></tr>
+    <tr><td>KPI-5 — Land irrigated with harvested rainwater</td><td class="r">${fmt1(r.KPI5)} ha</td></tr>
+    <tr><td>KPI-7 — Inhabitants with reduced flood exposure</td><td class="r">${fmt(popExp)}</td></tr>
+  </table>
+  <p class="note">Benefits also include pollutant removal at source, groundwater recharge, urban cooling and green habitat, reduced freshwater abstraction for irrigation, and lower pumping energy through gravity/solar distribution.</p>
+
+  <h3>1.6 Alignment with LIFE and the policy framework</h3>
+  <p>The intervention serves the LIFE Circular Economy & Quality of Life water-resilience priority (§2.2.1) by combining nature-based natural water retention, Sustainable Urban Drainage Systems and source control of urban runoff, digital optimisation of operation, and integrated risk management. It supports Moldova's alignment with the EU Water Framework, Floods and Urban Wastewater Treatment Directives, and feeds the relevant River Basin Management Plan (${basin}), Flood Risk Management Plan, the national Drought Management Plan, and the local urban master plan (PUG).</p>
+
+  <h2>PART 2 — Technical Solution (retain–store–reuse train)</h2>
+  <p>The locality deploys the following configuration of the modular RAIN2RES train, sized to the ${fmt1(r.A_ha)} ha catchment:</p>
+  <h3>2.1 Capture & source control → convey & slow</h3>
+  <p>Impervious areas are disconnected and runoff intercepted at source through ${srcText}, with ${conveyText}.</p>
+  <h3>2.2 Retain & infiltrate (flood control)</h3>
+  <p>Detention/retention basins, infiltration trenches and constructed wetlands attenuate peak flows and recharge soil and groundwater. The detention volume required to cut the 1-in-10-year peak by ≥40% within the demonstration catchment is about <b>${fmt(r.V_det)} m³</b>, fully implemented under the project; town-wide roll-out beyond the pilot sub-catchment follows through the replication strategy and complementary investment.</p>
+  <h3>2.3 Store (resource)</h3>
+  <p>Cleaned rainwater is banked in lined ponds and/or modular tanks, protected by first-flush diversion. Storage is sized to the local irrigation calendar — approximately <b>${fmt(r.storageReuse)} m³</b> of working storage (about four turnovers per season) banks wet-month capture for the summer deficit.</p>
+  <h3>2.4 Reuse for irrigation & urban greenery</h3>
+  <p>Stored water is delivered by gravity where topography allows and by solar-powered pumps elsewhere, feeding buried drip lines and low-pressure sprinklers serving ${reuse}. Applications are scheduled from soil-moisture and weather data to match crop evapotranspiration (~${fmt(r.irrigDemand)} m³/ha/season at critical growth stages). Water is treated to the EU Water Reuse Regulation (2020/741) class required for each use.</p>
+  <h3>2.5 Sense & optimise</h3>
+  <p>The system is instrumented with ${equipList}, metering quantity and quality, triggering operation and feeding the shared dashboard, the integrated water-accounting model and the LIFE KPI web tool.</p>
+  <h3>2.6 Bill of quantities (selected measures)</h3>
+  ${itemTable(r)}
+  <h3>2.7 Operation & maintenance</h3>
+  <p>O&M comprises seasonal sediment removal from swales/basins, vegetation management, inspection of first-flush and filtration units, pump and sensor servicing, and annual water-quality verification. Access, tariffs and maintenance responsibilities are governed by reuse agreements with farmers and water-user associations; municipal staff are trained under the project.</p>
+
+  <h2>PART 3 — Budget Estimation</h2>
+  <p>The estimated total eligible cost for the ${name} pilot is <b>${eur(r.total)}</b>, with an EU contribution of <b>${eur(r.eu)}</b> (${Math.round(r.euRate*100)}% LIFE SAP rate) and <b>${eur(r.cofin)}</b> in co-financing. The structure follows the LIFE cost categories:</p>
+  ${budgetTable(r)}
+  <h3>3.1 Cost-effectiveness</h3>
+  <p>
+    <span class="pill">${r.ce_retain?eur(r.ce_retain):'—'} per m³/yr stormwater managed</span>
+    <span class="pill">${r.ce_reuse?eur(r.ce_reuse):'—'} per m³/yr reused</span>
+    <span class="pill">${r.ce_ha?eur(r.ce_ha):'—'} per ha irrigated</span>
+    <span class="pill">${r.ce_cap?eur(r.ce_cap):'—'} per inhabitant protected</span>
+  </p>
+  <p class="note">Indirect costs apply the LIFE 7% flat rate on direct costs excluding subcontracting. Co-financing to be confirmed by LPA council decision and letter of support prior to grant signature. All unit costs are indicative and should be validated against local tender prices during detailed design.</p>
+  `;
+  return html;
+}
+
+/* ============================ ACTIONS ============================ */
+function generate(){
+  const r=computeAll();
+  document.getElementById('results').style.display='block';
+  document.getElementById('kpiCards').innerHTML=kpiCards(r);
+  document.getElementById('budgetPreview').innerHTML='<h3 style="color:#0b5394;font-size:15px;margin:14px 0 4px">Budget summary (LIFE cost categories)</h3>'+budgetTable(r).replace('<table>','<table class="bud">');
+  document.getElementById('dossier').innerHTML=buildDossier(r);
+  document.getElementById('results').scrollIntoView({behavior:'smooth'});
+}
+
+function suggestQty(){
+  // Sizes the components to FULLY manage the entered (demonstration) catchment, so the
+  // budget and the water-balance KPIs stay consistent. Enter the specific pilot sub-catchment
+  // that will be built under the project — not the whole town (that is the replication potential).
+  const A_ha=num('catchmentArea'), I=num('impervious'), P=num('rainfall'), D=num('designStorm');
+  const A_m2=A_ha*10000, A_imp=A_m2*(I/100);
+  const Rv=Math.max(0.05,Math.min(0.95,0.05+0.009*I));
+  const V_event=A_m2*(D/1000)*Rv, V_det=V_event*0.55;
+  const captureEff=num('captureEff')/100, fReuse=num('fReuse')/100;
+  const V_managed=A_m2*(P/1000)*Rv*captureEff;
+  const KPI4=Math.min(V_managed*fReuse, num('irrigArea')*num('irrigDemand'));
+  const irr=num('irrigArea');
+  const set=(id,v)=>{const e=$('qty_'+id); if(e){e.value=Math.max(0,Math.round(v)); $('on_'+id).checked=v>0;}};
+  set('permPave',   0.005*A_imp);
+  set('rainGarden', 0.006*A_imp);
+  set('bioswale',   A_ha*25);
+  set('filterStrip',0.005*A_imp);
+  set('detention',  V_det);
+  set('infilTrench',A_ha*8);
+  set('wetland',    0.01*A_m2);
+  set('storagePond',KPI4/4);
+  set('firstFlush', irr>0?Math.max(1, Math.round(irr/12)):0);
+  set('dripIrrig',  irr);
+  set('solarPump',  irr>0?Math.max(4, irr*0.5):0);
+  set('iotSensor',  Math.max(3, Math.round(A_ha/3)));
+  set('soilMoist',  irr>0?Math.max(2, Math.round(irr/10)):0);
+  set('dashboard',  1);
+  generate();
+  alert('Cantitățile au fost pre-completate pentru a gestiona integral bazinul introdus. Ajustați-le la situația dvs. și apăsați din nou „Generează dosarul".');
+}
+
+/* ---- WORD EXPORT ---- */
+function downloadWord(){
+  if(!document.getElementById('dossier').innerHTML.trim()){ generate(); }
+  const name=(txt('lpaName')||'LPA').replace(/[^\w\-]+/g,'_');
+  const css=`body{font-family:'Calibri',sans-serif;font-size:11pt;color:#13202f} h1{color:#0b5394;font-size:16pt;border-bottom:2px solid #0b5394} h2{color:#0b5394;font-size:13pt} h3{color:#0e7c7b;font-size:11.5pt} table{border-collapse:collapse;width:100%;font-size:9.5pt} th,td{border:1px solid #9bb0c4;padding:4px 6px} th{background:#eef4fb} .r{text-align:right} .note,.meta{color:#5b6878;font-size:9pt} .pill{display:inline-block;border:1px solid #bfe8e2;background:#eafaf6;border-radius:10px;padding:1px 8px;margin:2px}`;
+  const head="<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>RAIN2RES "+name+"</title><style>"+css+"</style></head><body>";
+  const html=head+document.getElementById('dossier').innerHTML+"</body></html>";
+  const blob=new Blob(['﻿',html],{type:'application/msword'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='RAIN2RES_'+name+'_dossier.doc'; a.click();
+}
+
+/* ---- JSON SAVE / LOAD ---- */
+function collect(){
+  const o={};
+  document.querySelectorAll('#form input,#form select,#form textarea').forEach(el=>{
+    if(el.type==='checkbox') o[el.id]=el.checked; else o[el.id]=el.value;
+  });
+  return o;
+}
+function saveJSON(){
+  const o=collect();
+  const name=(txt('lpaName')||'LPA').replace(/[^\w\-]+/g,'_');
+  const blob=new Blob([JSON.stringify(o,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='RAIN2RES_'+name+'_date.json'; a.click();
+}
+function loadJSON(ev){
+  const f=ev.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=e=>{ try{ const o=JSON.parse(e.target.result);
+    Object.keys(o).forEach(k=>{const el=$(k); if(!el) return; if(el.type==='checkbox') el.checked=!!o[k]; else el.value=o[k];});
+    generate();
+  }catch(err){ alert('Fișier JSON invalid.'); } };
+  rd.readAsText(f);
+}
+
+/* ---- EXAMPLE ---- */
+function loadExample(){
+  const ex={lpaName:'Orașul Ungheni',raion:'Ungheni',basin:'Danube–Prut–Black Sea',settlementType:'urban',
+    population:'30000',popExposed:'6500',contact:'Ing. [Nume], Serviciul Tehnic APL',contactInfo:'',
+    catchmentArea:'12',impervious:'50',rainfall:'560',designStorm:'68',soilType:'loam',drainageState:'undersized',
+    floodFreq:'pluvial flooding in the lower town 1–2 times/year',droughtNote:'severe 2024 drought; rain-fed market gardens',
+    irrigArea:'15',irrigDemand:'500',reuseTarget:'a mix of agricultural plots, public green space and household gardens',landAvail:'municipal land available',
+    captureEff:'70',fReuse:'55',personnelRate:'18',travelRate:'3',prelimRate:'8',auditFixed:'10000',indirectRate:'7',euRate:'60'};
+  Object.keys(ex).forEach(k=>{const el=$(k); if(el) el.value=ex[k];});
+  suggestQty();
+}
+</script>
+</body>
+</html>
